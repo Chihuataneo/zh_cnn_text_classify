@@ -17,8 +17,8 @@ from text_cnn import TextCNN
 tf.flags.DEFINE_float("dev_sample_percentage", .1, "Percentage of the training data to use for validation")
 #tf.flags.DEFINE_string("positive_data_file", "./data/rt-polaritydata/rt-polarity.pos", "Data source for the positive data.")
 #tf.flags.DEFINE_string("negative_data_file", "./data/rt-polaritydata/rt-polarity.neg", "Data source for the negative data.")
-tf.flags.DEFINE_string("positive_data_file", "./data/ham_100.utf8", "Data source for the positive data.")
-tf.flags.DEFINE_string("negative_data_file", "./data/spam_100.utf8", "Data source for the negative data.")
+tf.flags.DEFINE_string("positive_data_file", "data/ham_100.utf8", "Data source for the positive data.")
+tf.flags.DEFINE_string("negative_data_file", "data/spam_100.utf8", "Data source for the negative data.")
 tf.flags.DEFINE_integer("num_labels", 2, "Number of labels for data. (default: 2)")
 
 # Model hyperparameters
@@ -63,11 +63,13 @@ if not os.path.exists(out_dir):
 print("Loading data...")
 x_text, y = data_helpers.load_positive_negative_data_files(FLAGS.positive_data_file, FLAGS.negative_data_file)
 
+
 # Get embedding vector
 sentences, max_document_length = data_helpers.padding_sentences(x_text, '<PADDING>')
+print('max_document_length:' + str(max_document_length))
 x = np.array(word2vec_helpers.embedding_sentences(sentences, embedding_size = FLAGS.embedding_dim, file_to_save = os.path.join(out_dir, 'trained_word2vec.model')))
 print("x.shape = {}".format(x.shape))
-print("y.shape = {}".format(y.shape))
+print("y.shape = {}".format(y.shape))   #原结果是
 
 # Save params
 training_params_file = os.path.join(out_dir, 'training_params.pickle')
@@ -93,18 +95,19 @@ print("Train/Dev split: {:d}/{:d}".format(len(y_train), len(y_dev)))
 with tf.Graph().as_default():
     session_conf = tf.ConfigProto(
         allow_soft_placement = FLAGS.allow_soft_placement,
-	log_device_placement = FLAGS.log_device_placement)
+        log_device_placement = FLAGS.log_device_placement)
     sess = tf.Session(config = session_conf)
     with sess.as_default():
         cnn = TextCNN(
-	    sequence_length = x_train.shape[1],
-	    num_classes = y_train.shape[1],
-	    embedding_size = FLAGS.embedding_dim,
-	    filter_sizes = list(map(int, FLAGS.filter_sizes.split(","))),
-	    num_filters = FLAGS.num_filters,
-	    l2_reg_lambda = FLAGS.l2_reg_lambda)
+          #  sequence_length = x_train.shape[1],     #这个地方不对max_document_length
+            sequence_length = max_document_length,
+            num_classes = y_train.shape[1],
+            embedding_size = FLAGS.embedding_dim,
+            filter_sizes = list(map(int, FLAGS.filter_sizes.split(","))),
+            num_filters = FLAGS.num_filters,
+            l2_reg_lambda = FLAGS.l2_reg_lambda)
 
-	# Define Training procedure
+    # Define Training procedure
         global_step = tf.Variable(0, name="global_step", trainable=False)
         optimizer = tf.train.AdamOptimizer(1e-3)
         grads_and_vars = optimizer.compute_gradients(cnn.loss)
