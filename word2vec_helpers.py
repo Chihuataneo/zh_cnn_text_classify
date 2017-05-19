@@ -71,3 +71,5 @@ def run_main():
 def test():
     vectors = embedding_sentences([['first', 'sentence'], ['second', 'sentence']], embedding_size = 4, min_count = 1)
     print(vectors)
+   
+   
