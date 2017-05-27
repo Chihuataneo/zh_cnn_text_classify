@@ -9,6 +9,7 @@ import word2vec_helpers
 import tensorflow as tf
 import time
 import pickle
+import jieba
 
 def load_data_and_labels(input_text_file, input_label_file, num_labels):
     x_text = read_and_clean_zh_file(input_text_file)
@@ -77,7 +78,9 @@ def mkdir_if_not_exist(dirpath):
         os.mkdir(dirpath)
 
 def seperate_line(line):
-    return ''.join([word + ' ' for word in line])
+ #   return ''.join([word + ' ' for word in line])
+    seg_list = jieba.cut(line)
+    return ' '.join(seg_list)
 
 def read_and_clean_zh_file(input_file, output_cleaned_file = None):
     lines = list(open(input_file, "r").readlines())
